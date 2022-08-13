@@ -1,0 +1,50 @@
+version: '2.4'
+services:
+  redis.docker:
+    image: redis:alpine
+    volumes:
+      - redis:/data
+  fitbit.weight.docker.api:
+    image: ghcr.io/fabulator/fitbit-weight:latest
+    volumes:
+      - fitbit-token:/src
+    ports:
+      - 3000:3000
+    command:
+      - api.js
+    environment:
+      - API_KEY=${API_KEY}
+      - API_SECRET=${API_SECRET}
+      - VERIFY_TOKEN=${VERIFY_TOKEN}
+      - BASE_URI=http://localhost:3000
+      - AUTHORIZE_PATH=/authorize
+      - LOGIN_PATH=/login
+      - LISTEN_PATH=/listen
+      - PORT=3000
+      - REDIS_HOST=redis.docker
+      - TOKEN_PATH=/src/token.txt
+      - QUEUE_SUBSCRIPTION_NAME=fitbit-subscription-weight
+      - QUEUE_WEIGHT_NAME=fitbit-weight
+  fitbit.weight.docker.worker:
+    image: ghcr.io/fabulator/fitbit-weight:latest
+    volumes:
+      - fitbit-token:/src
+    command:
+      - worker.js
+    environment:
+      - API_KEY=${API_KEY}
+      - API_SECRET=${API_SECRET}
+      - VERIFY_TOKEN=${VERIFY_TOKEN}
+      - BASE_URI=https://your.domain.com
+      - AUTHORIZE_PATH=/authorize
+      - LOGIN_PATH=/login
+      - LISTEN_PATH=/listen
+      - PORT=3000
+      - REDIS_HOST=redis.docker
+      - TOKEN_PATH=/src/token.txt
+      - QUEUE_SUBSCRIPTION_NAME=fitbit-subscription-weight
+      - QUEUE_WEIGHT_NAME=fitbit-weight
+
+volumes:
+  redis:
+  fitbit-token:
