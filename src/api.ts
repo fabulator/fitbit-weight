@@ -1,4 +1,3 @@
-import 'cross-fetch/polyfill';
 import { fastify } from 'fastify';
 import { ApiScope, SubscriptionCollection } from 'fitbit-api-handler';
 import rawBody from 'fastify-raw-body';

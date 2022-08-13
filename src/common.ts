@@ -1,3 +1,4 @@
+import 'cross-fetch/polyfill';
 import * as fs from 'fs/promises';
 import { ApiToken } from 'fitbit-api-handler/src/types/api';
 import { Api } from 'fitbit-api-handler';
