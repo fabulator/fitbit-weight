@@ -37,7 +37,7 @@ const queue = new Queue<FitbitData>(QUEUE_NAME, { connection: { host: REDIS_HOST
             const { code } = request.query;
             const { user_id } = await api.requestAccessToken(code, REDIRECT_URL);
 
-            api.addSubscription(user_id, SubscriptionCollection.BODY);
+            await api.addSubscription(user_id, SubscriptionCollection.BODY);
 
             return user_id;
         },
