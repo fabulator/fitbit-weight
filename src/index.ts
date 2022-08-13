@@ -57,4 +57,4 @@ app.post(LISTEN_PATH, {
     },
 });
 
-app.listen({ port: Number(PORT) });
+app.listen({ port: Number(PORT), host: '0.0.0.0' });
