@@ -57,7 +57,7 @@ const REDIRECT_URL = `${BASE_URI}${AUTHORIZE_PATH}`;
             }
 
             if (!api.verifyFitbitRequest(request.rawBody, fitbitSignature)) {
-                throw new Error('Invalid signature.');
+                console.error('Invalid signature', request.rawBody, fitbitSignature);
             }
 
             const body = JSON.parse(request.rawBody);
