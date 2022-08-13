@@ -1,29 +1,20 @@
 import 'cross-fetch/polyfill';
 import { fastify } from 'fastify';
-import { Queue } from 'bullmq';
-import { Api, ApiScope, SubscriptionCollection } from 'fitbit-api-handler';
+import { ApiScope, SubscriptionCollection } from 'fitbit-api-handler';
 import rawBody from 'fastify-raw-body';
 import { config } from 'dotenv';
+import { Queue } from 'bullmq';
+import { api, FitbitData, queueSettings, tokenService } from './common';
 
 config();
 
-const { API_KEY, API_SECRET, BASE_URI, AUTHORIZE_PATH, LOGIN_PATH, LISTEN_PATH, VERIFY_TOKEN, PORT, QUEUE_NAME, REDIS_HOST } = process.env;
-
-const api = new Api(API_KEY, API_SECRET);
+const { BASE_URI, AUTHORIZE_PATH, LOGIN_PATH, LISTEN_PATH, VERIFY_TOKEN, PORT, QUEUE_SUBSCRIPTION_NAME } = process.env;
 
 const app = fastify({ logger: true });
 
 const REDIRECT_URL = `${BASE_URI}${AUTHORIZE_PATH}`;
 
-type FitbitData = {
-    collectionType: 'body';
-    date: string;
-    ownerId: string;
-    ownerType: string;
-    subscriptionId: string;
-};
-
-const queue = new Queue<FitbitData>(QUEUE_NAME, { connection: { host: REDIS_HOST } });
+const queue = new Queue<FitbitData>(QUEUE_SUBSCRIPTION_NAME, queueSettings);
 
 (async () => {
     await app.register(rawBody, {
@@ -35,11 +26,13 @@ const queue = new Queue<FitbitData>(QUEUE_NAME, { connection: { host: REDIS_HOST
     app.get<{ Querystring: { code: string } }>(AUTHORIZE_PATH, {
         handler: async (request) => {
             const { code } = request.query;
-            const { user_id } = await api.requestAccessToken(code, REDIRECT_URL);
+            const token = await api.requestAccessToken(code, REDIRECT_URL);
 
-            await api.addSubscription(user_id, SubscriptionCollection.BODY);
+            await api.addSubscription(token.user_id, SubscriptionCollection.BODY);
 
-            return user_id;
+            tokenService.set(token);
+
+            return token.user_id;
         },
     });
 
@@ -71,7 +64,6 @@ const queue = new Queue<FitbitData>(QUEUE_NAME, { connection: { host: REDIS_HOST
                 throw new Error('Invalid signature.');
             }
 
-            // eslint-disable-next-line compat/compat
             await Promise.all(
                 request.body.map(async (item) => {
                     await queue.add(`Weight from ${item.date}`, item);
