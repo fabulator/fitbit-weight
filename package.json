@@ -2,14 +2,14 @@
   "name": "fitbit-weight",
   "version": "1.0.0",
   "description": "",
+  "license": "ISC",
+  "author": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint .",
-    "develop": "ts-node-dev src"
+    "develop": "ts-node-dev src",
+    "lint": "eslint ."
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "cross-fetch": "^3.1.5",
     "dotenv": "^16.0.1",
