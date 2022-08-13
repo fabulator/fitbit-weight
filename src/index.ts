@@ -50,14 +50,14 @@ const REDIRECT_URL = `${BASE_URI}${AUTHORIZE_PATH}`;
                 throw new Error('Invalid request. It must be the string.');
             }
 
-            const fitbitSignature = request.headers['X-Fitbit-Signature'];
+            const fitbitSignature = request.headers['x-fitbit-signature'];
 
             if (Array.isArray(fitbitSignature)) {
                 throw new Error('Invalid signature. It must be the string.');
             }
 
             if (!api.verifyFitbitRequest(request.rawBody, fitbitSignature)) {
-                console.error('Invalid signature', request.rawBody, fitbitSignature);
+                console.error('Invalid signature', request.rawBody, request.headers);
             }
 
             const body = JSON.parse(request.rawBody);
