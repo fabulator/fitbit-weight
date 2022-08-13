@@ -1,6 +1,6 @@
 # Fitbit Weight
 
-This app will create authorization link with Fitbit account and listen to all changes in users weight. It will send payload to redis bullmq server.
+This app will create authorization link with Fitbit account and listen to all changes in users weight. It will send payload to redis bullmq server. Event is processed further more. It will take all weight meassurement from given data and put them to another queue.
 
 ## ENV variables
 
