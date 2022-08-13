@@ -27,9 +27,11 @@ app.get<{ Querystring: { verify: string } }>(LISTEN_PATH, {
     handler: async (request, reply) => {
         const { verify } = request.query;
         if (verify === VERIFY_TOKEN) {
-            return reply.code(204);
+            reply.code(204);
+            return '';
         }
-        return reply.code(404);
+        reply.code(404);
+        return '';
     },
 });
 
@@ -46,7 +48,7 @@ app.post(LISTEN_PATH, {
         }
 
         if (!api.verifyFitbitRequest(request.body, fitbitSignature)) {
-            return reply.code(404);
+            throw new Error('Invalid signature.');
         }
 
         const body = JSON.parse(request.body);
@@ -54,6 +56,7 @@ app.post(LISTEN_PATH, {
         body.forEach((item: Record<string, unknown>) => {
             console.log(item);
         });
+        return '';
     },
 });
 
