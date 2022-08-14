@@ -33,6 +33,7 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
 
         await garminApi.login(GARMIN_LOGIN, GARMIN_PASSWORD);
 
+        // TODO: It can cause double meassurements
         await garminApi.logWeight(datetime, job.data.weight);
     },
     queueSettings,
