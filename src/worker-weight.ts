@@ -1,9 +1,12 @@
 import { Worker } from 'bullmq';
 import { ApiWeight } from 'fitbit-api-handler/src/types/api/ApiWeight';
 import { DateTime } from 'luxon';
+import { GarminApi } from 'garmin-api-handler';
 import { logger, queueSettings, stravaApi, tokenService } from './common';
 
-const { QUEUE_WEIGHT_NAME } = process.env;
+const garminApi = new GarminApi();
+
+const { QUEUE_WEIGHT_NAME, GARMIN_LOGIN, GARMIN_PASSWORD } = process.env;
 
 logger.info('Booting up...');
 
@@ -12,9 +15,11 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
     async (job) => {
         logger.info(job.data, 'Processing...');
 
+        const datetime = DateTime.fromISO(job.data.datetime);
+
         // strava can have only one weight, no history
         // check that item is not too old
-        if (DateTime.fromISO(job.data.datetime).diffNow().as('day') <= 1) {
+        if (datetime.diffNow().as('day') <= 1) {
             const token = await tokenService.get('strava');
 
             if (!token) {
@@ -25,6 +30,10 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
 
             await stravaApi.updateWeight(job.data.weight);
         }
+
+        await garminApi.login(GARMIN_LOGIN, GARMIN_PASSWORD);
+
+        await garminApi.logWeight(datetime, job.data.weight);
     },
     queueSettings,
 );
