@@ -9,11 +9,11 @@ logger.info('Booting up...');
 const worker = new Worker<ApiWeight>(
     QUEUE_WEIGHT_NAME,
     async (job) => {
-        logger.info('Processing...', job.data);
+        logger.info(job.data, 'Processing...');
 
         // strava can have only one weight, no history
         // check that item is not too old
-        if (job.data.datetime.diffNow().as('day') < 1) {
+        if (job.data.datetime.diffNow().as('day') <= 1) {
             const token = await tokenService.get('strava');
 
             if (!token) {

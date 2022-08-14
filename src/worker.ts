@@ -12,7 +12,7 @@ logger.info('Booting up...');
 const worker = new Worker<FitbitData>(
     QUEUE_SUBSCRIPTION_NAME,
     async (job) => {
-        logger.info('Processing...', job.data);
+        logger.info(job.data, 'Processing...');
 
         const date = DateTime.fromISO(job.data.date);
 
