@@ -2,7 +2,7 @@ import { Queue, Worker } from 'bullmq';
 import { DateTime } from 'luxon';
 
 import { ApiWeight } from 'fitbit-api-handler/src/types/api/ApiWeight';
-import { api, FitbitData, queueSettings, tokenService } from './common';
+import { fitbitApi, FitbitData, queueSettings, tokenService } from './common';
 
 const { QUEUE_SUBSCRIPTION_NAME, QUEUE_WEIGHT_NAME } = process.env;
 
@@ -13,13 +13,15 @@ const worker = new Worker<FitbitData>(
     async (job) => {
         const date = DateTime.fromISO(job.data.date);
 
-        const token = await tokenService.get();
+        const token = await tokenService.get('fitbit');
 
         if (!token) {
             throw new Error('There is no token.');
         }
 
-        const weights = await api.getWeights(date, date);
+        fitbitApi.setAccessToken(token.access_token);
+
+        const weights = await fitbitApi.getWeights(date, date);
 
         await Promise.all(weights.map((item) => queue.add(`Weight ${item.logId}`, item)));
     },

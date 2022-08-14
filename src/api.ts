@@ -1,13 +1,11 @@
 import { fastify } from 'fastify';
 import { ApiScope, SubscriptionCollection } from 'fitbit-api-handler';
+import { ApiScope as StravaScope } from 'strava-api-handler';
 import rawBody from 'fastify-raw-body';
-import { config } from 'dotenv';
 import { Queue } from 'bullmq';
-import { api, FitbitData, queueSettings, tokenService } from './common';
+import { fitbitApi, FitbitData, queueSettings, stravaApi, tokenService } from './common';
 
-config();
-
-const { BASE_URI, AUTHORIZE_PATH, LOGIN_PATH, LISTEN_PATH, VERIFY_TOKEN, PORT, QUEUE_SUBSCRIPTION_NAME } = process.env;
+const { BASE_URI, AUTHORIZE_PATH, LOGIN_PATH, LISTEN_PATH, VERIFY_TOKEN, PORT, QUEUE_SUBSCRIPTION_NAME, STRAVA_RETURN_URL } = process.env;
 
 const app = fastify({ logger: true });
 
@@ -20,16 +18,37 @@ const queue = new Queue<FitbitData>(QUEUE_SUBSCRIPTION_NAME, queueSettings);
         field: 'rawBody',
     });
 
-    app.get(LOGIN_PATH, { handler: async () => api.getLoginUrl(REDIRECT_URL, [ApiScope.WEIGHT]) });
+    app.get(LOGIN_PATH, { handler: async () => fitbitApi.getLoginUrl(REDIRECT_URL, [ApiScope.WEIGHT]) });
+
+    app.get('/strava/login', {
+        handler: async () => stravaApi.getLoginUrl(STRAVA_RETURN_URL, [StravaScope.PROFILE_WRITE]),
+    });
+
+    app.get<{ Querystring: { code: string } }>('/strava/authorize', {
+        handler: async (request) => {
+            const { code } = request.query;
+
+            const stravaToken = await stravaApi.requestAccessToken(code);
+
+            const token = {
+                ...stravaToken,
+                expireDate: new Date(stravaToken.expires_at * 1000).toISOString(),
+            };
+
+            await tokenService.set('strava', token);
+
+            return token.athlete.id;
+        },
+    });
 
     app.get<{ Querystring: { code: string } }>(AUTHORIZE_PATH, {
         handler: async (request) => {
             const { code } = request.query;
-            const token = await api.requestAccessToken(code, REDIRECT_URL);
+            const token = await fitbitApi.requestAccessToken(code, REDIRECT_URL);
 
-            await api.addSubscription(token.user_id, SubscriptionCollection.BODY);
+            await fitbitApi.addSubscription(token.user_id, SubscriptionCollection.BODY);
 
-            tokenService.set(token);
+            await tokenService.set('fitbit', token);
 
             return token.user_id;
         },
@@ -59,7 +78,7 @@ const queue = new Queue<FitbitData>(QUEUE_SUBSCRIPTION_NAME, queueSettings);
                 throw new Error('Invalid signature. It must be the string.');
             }
 
-            if (!api.verifyFitbitRequest(request.rawBody, fitbitSignature)) {
+            if (!fitbitApi.verifyFitbitRequest(request.rawBody, fitbitSignature)) {
                 throw new Error('Invalid signature.');
             }
 
