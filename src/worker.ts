@@ -1,16 +1,19 @@
 import { Queue, Worker } from 'bullmq';
 import { DateTime } from 'luxon';
-
 import { ApiWeight } from 'fitbit-api-handler/src/types/api/ApiWeight';
-import { fitbitApi, FitbitData, queueSettings, tokenService } from './common';
+import { fitbitApi, FitbitData, logger, queueSettings, tokenService } from './common';
 
 const { QUEUE_SUBSCRIPTION_NAME, QUEUE_WEIGHT_NAME } = process.env;
 
 const queue = new Queue<ApiWeight>(QUEUE_WEIGHT_NAME, queueSettings);
 
+logger.info('Booting up...');
+
 const worker = new Worker<FitbitData>(
     QUEUE_SUBSCRIPTION_NAME,
     async (job) => {
+        logger.info('Processing...', job.data);
+
         const date = DateTime.fromISO(job.data.date);
 
         const token = await tokenService.get('fitbit');
@@ -29,6 +32,8 @@ const worker = new Worker<FitbitData>(
 );
 
 const close = async (signal: string) => {
+    logger.info('Exiting...');
+
     if (signal === 'SIGINT') {
         process.exit(0);
     }

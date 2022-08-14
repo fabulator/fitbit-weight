@@ -4,10 +4,13 @@ import { Api as StravaApi } from 'strava-api-handler';
 import { ADAPTERS, Storage } from 'storage-keeper';
 import { DateTime } from 'luxon';
 import { config } from 'dotenv';
+import { pino } from 'pino';
 
 config();
 
 const { API_KEY, API_SECRET, REDIS_HOST, TOKEN_PATH, STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET } = process.env;
+
+export const logger = pino();
 
 export const queueSettings = { connection: { host: REDIS_HOST } };
 
