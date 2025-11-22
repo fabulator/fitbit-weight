@@ -31,10 +31,13 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
             await stravaApi.updateWeight(job.data.weight);
         }
 
+        logger.info('Logging to Connect...');
         await garminApi.login(GARMIN_LOGIN, GARMIN_PASSWORD);
 
+        logger.info('Writting to Connect...');
         // TODO: It can cause double meassurements
         await garminApi.logWeight(datetime, job.data.weight);
+        logger.info('Finito...');
     },
     queueSettings,
 );
