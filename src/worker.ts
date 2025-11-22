@@ -28,10 +28,12 @@ const worker = new Worker<FitbitData>(
 
         logger.info(`Downloaded data... ${JSON.stringify(weights)}`);
 
-        await Promise.all(weights.map((item) => {
-            logger.info(item, `Weight ${item.logId}`);
-            return queue.add(`Weight ${item.logId}`, item);
-        }));
+        await Promise.all(
+            weights.map((item) => {
+                logger.info(item, `Weight ${item.logId}`);
+                return queue.add(`Weight ${item.logId}`, item);
+            }),
+        );
     },
     queueSettings,
 );
