@@ -1,10 +1,8 @@
 import { Worker } from 'bullmq';
 import { ApiWeight } from 'fitbit-api-handler/src/types/api/ApiWeight';
+import { GarminConnect } from 'garmin-connect';
 import { DateTime } from 'luxon';
-import { GarminApi } from 'garmin-api-handler';
 import { logger, queueSettings, stravaApi, tokenService } from './common';
-
-const garminApi = new GarminApi();
 
 const { QUEUE_WEIGHT_NAME, GARMIN_LOGIN, GARMIN_PASSWORD } = process.env;
 
@@ -32,11 +30,13 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
         }
 
         logger.info('Logging to Connect...');
-        await garminApi.login(GARMIN_LOGIN, GARMIN_PASSWORD);
+        const connect = new GarminConnect({ username: GARMIN_LOGIN, password: GARMIN_PASSWORD });
+        await connect.login();
 
         logger.info('Writting to Connect...');
-        // TODO: It can cause double meassurements
-        await garminApi.logWeight(datetime, job.data.weight);
+
+        await connect.updateWeight(datetime.toJSDate(), job.data.weight / 0.453592, 'Europe/Prague');
+
         logger.info('Finito...');
     },
     queueSettings,
