@@ -4,7 +4,7 @@ import { GarminConnect } from 'garmin-connect';
 import { DateTime } from 'luxon';
 import { logger, queueSettings, stravaApi, tokenService } from './common';
 
-const { QUEUE_WEIGHT_NAME, GARMIN_LOGIN, GARMIN_PASSWORD } = process.env;
+const { QUEUE_WEIGHT_NAME, GARMIN_LOGIN, GARMIN_PASSWORD, WEBHOOK } = process.env;
 
 logger.info('Booting up...');
 
@@ -14,6 +14,14 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
         logger.info(job.data, 'Processing...');
 
         const datetime = DateTime.fromISO(job.data.datetime);
+
+        if (WEBHOOK) {
+            await fetch(WEBHOOK, {
+                body: JSON.stringify({ date: job.data.datetime, weight: job.data.weight }),
+                headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+            });
+        }
 
         // strava can have only one weight, no history
         // check that item is not too old
