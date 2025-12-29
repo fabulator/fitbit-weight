@@ -15,6 +15,8 @@ const worker = new Worker<Omit<ApiWeight, 'datetime'> & { datetime: string }>(
 
         const datetime = DateTime.fromISO(job.data.datetime);
 
+        logger.info(WEBHOOK, 'Webook...');
+
         if (WEBHOOK) {
             await fetch(WEBHOOK, {
                 body: JSON.stringify({ date: job.data.datetime, weight: job.data.weight }),
