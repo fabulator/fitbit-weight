@@ -84,7 +84,7 @@ const queue = new Queue<FitbitData>(QUEUE_SUBSCRIPTION_NAME, queueSettings);
 
             await Promise.all(
                 request.body.map(async (item) => {
-                    await queue.add(`Weight from ${item.date}`, item);
+                    await queue.add(`Weight from ${item.date}`, item, { delay: 1000 * 60 });
                 }),
             );
             return '';
